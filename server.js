@@ -12,7 +12,7 @@ app.use(cors());
 
 //this is our grouping of .get's that will grab our information
 app.get('/location', locationHandler);
-// app.get('/weather', weatherHandler);
+app.get('/weather', weatherHandler);
 
 function locationHandler(request, response) {
   try{
@@ -36,20 +36,31 @@ function locationHandler(request, response) {
   }
 }
 
-// app.get('/weather', (request, response) => {
-//   try{
-//     const weatherData = require('./data/darksky.json');
-//     const forecastData = weatherData.daily.data.map(day => new Weather(day));
-//     response.send(forecastData);
-//   }
-//   catch(error){
-//     errorHandler('We are so SOOORRRRRY...something went wrong....', request, response);
-//   }
-// });
-// function Weather(day) {
-//   this.time = new Date(day.time*1000).toString().slice(0,15);
-//   this.forecast = day.summary;
-// }
+
+function weatherHandler (request, response) {
+  let latitude = request.query.latitude;
+  let longitude = request.query.longitude;
+
+  const url =`https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${latitude},${longitude}`;
+
+  superagent.get(url)
+    .then(data =>{
+      const forecastData = data.body.daily.data.map(day => new Weather(day));
+
+      response.status(200).json(forecastData);
+    })
+    .catch(() => {
+      errorHandler('We are so SOOORRRRRY...something went wrong....', request, response);
+    });
+}
+
+
+function Weather(day) {
+  this.time = new Date(day.time*1000).toString().slice(0,15);
+  this.forecast = day.summary;
+}
+
+
 function Location(query, geoData){
   this.search_query = query;
   this.formatted_query = geoData.display_name;
